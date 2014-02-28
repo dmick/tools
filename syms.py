@@ -30,7 +30,6 @@ maxlen = 0
 allfiles = args.definer + args.user + args.filenames
 if args.definer: print "definers: ", args.definer
 if args.user: print "users: ", args.user
-print "files to check: ", allfiles
 
 for name in allfiles:
     nmargs = NM_ARGS
