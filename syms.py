@@ -14,7 +14,7 @@ DEFINES = 'ABCDGRSTVW'
 USES = 'U'
 # -C: demangle C++ symbols
 # -f posix: set output format to a more-parseable one
-NM_ARGS = ['nm', '-o', '-f', 'posix']
+NM_ARGS = ['nm', '-C', '-o', '-f', 'posix']
 
 defines = collections.defaultdict(list)
 uses = collections.defaultdict(list)
@@ -39,7 +39,9 @@ for name in allfiles:
         nmargs.append('-D')
     nm_output = subprocess.check_output(nmargs + [name])
     for l in nm_output.split('\n'):
-        words = l.split()
+	# demangled symbols may have embedded spaces, but not two.
+	# split on doublespace and filter the null results
+        words = filter(lambda s: s, l.split(' '))
         if len(words) < 3:
             continue
         filename, sym, symtype = words[:3]
