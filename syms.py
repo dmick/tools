@@ -24,6 +24,8 @@ parser.add_argument('--definer', nargs='+',
     help='look for symbols defined only in these files')
 parser.add_argument('--user', nargs='+',
     help='look for symbols used only by these files')
+parser.add_argument('-U', '--used', action='store_true',
+    help='show defined-and-used symbols')
 parser.add_argument('-u', '--unused', action='store_true',
     help='show defined-but-unused symbols')
 parser.add_argument('-v', '--verbose', action='store_true')
@@ -43,6 +45,8 @@ if args.verbose:
     print "files to check: ", allfiles
 
 if not args.used and not args.unused:
+    print >> sys.stderr, 'Should select either -U or -u'
+
 for name in allfiles:
     nmargs = NM_ARGS[:]
     # use dynamic symbols for .so's
@@ -82,14 +86,24 @@ for name in allfiles:
             if args.user and filename_only in args.user:
                 uses[sym].append(filename)
 
-print 'sym\tdefined in\tused by'
-for sym in sorted(defines.iterkeys()):
-    if len(defines[sym]) > 1:
-        print '*** odd: sym {} multiply defined ***'.format(sym)
-    if not uses[sym] and not args.unused:
-        continue
-    print '{sym:40}\t{defined_in:20}\t{used_by}\t'.format(
-        sym=sym,
-        defined_in=defines[sym][0],
-        used_by=','.join(uses[sym]) if uses[sym] else 'UNUSED'
-    )
+def printsyms(defines, uses, used=True):
+    if used:
+        fmt = '{sym}\t{defined_in}\t{used_by}'
+    else:
+        fmt ='{sym}\t{defined_in}\tUNUSED'
+
+    for sym in sorted(defines.iterkeys()) :
+        if (used and uses[sym]) or (not used and not uses[sym]):
+            print fmt.format(sym=sym,
+                             defined_in=defines[sym][0],
+                             used_by=','.join(uses[sym])
+                            )
+
+
+if args.used:
+    print '\nUSED SYMBOLS: (sym  definer  user)\n'
+    printsyms(defines, uses, used=True)
+
+if args.unused:
+    print '\nUNUSED SYMBOLS: (sym  definer)\n'
+    printsyms(defines, uses, used=False)
