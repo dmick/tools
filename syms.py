@@ -58,8 +58,6 @@ for name in allfiles:
             if args.user and filename_only in args.user:
                 uses[sym].append(filename)
 
-allused = collections.defaultdict(list)
-
 print 'sym\tdefined in\tused by'
 for sym in sorted(defines.iterkeys()):
     if len(defines[sym]) > 1:
@@ -71,9 +69,3 @@ for sym in sorted(defines.iterkeys()):
         defined_in=defines[sym][0],
         used_by=','.join(uses[sym]) if uses[sym] else 'UNUSED'
     )
-    allused[defines[sym][0]].append(sym)
-
-print '\n All used definer symbols:'
-for k, v in allused.iteritems():
-    print '{defined_in:20}\t{sym:50}'.format(defined_in=k, sym=', '.join(v))
-
