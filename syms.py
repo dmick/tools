@@ -8,6 +8,7 @@ given.)
 
 import argparse
 import collections
+import re
 import subprocess
 
 DEFINES = 'ABCDGRSTVW'
@@ -38,11 +39,19 @@ for name in allfiles:
         nmargs.append('-D')
     nm_output = subprocess.check_output(nmargs + [name])
     for l in nm_output.split('\n'):
-	# demangled symbols may have embedded spaces, but not two.
-	# split on doublespace and filter the null results
-        words = filter(lambda s: s, l.split(' '))
-        if len(words) < 3:
+        if not l:
             continue
+        # try to handle symbols-with-embedded-single-space: change
+        # any spaces between () to '?', split, change back.
+        groups = re.search('\((.*)\)', l)
+        new = None
+        if groups:
+            orig = groups.group(0)
+            new = orig.replace(' ', '?')
+            l.replace(orig, new)
+        words = l.split()
+        if new and new in words[0]:
+            words[0].replace(new, orig)
         filename, sym, symtype = words[:3]
         filename = filename.rstrip(':')
         filename_only = filename
