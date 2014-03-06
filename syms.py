@@ -21,9 +21,13 @@ defines = collections.defaultdict(list)
 uses = collections.defaultdict(list)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--definer', nargs='+', help='look for symbols defined only in these files')
-parser.add_argument('--user', nargs='+', help='look for symbols used only by these files')
-parser.add_argument('-u', '--unused', action='store_true', help='show defined-but-unused symbols')
+parser.add_argument('--definer', nargs='+',
+    help='look for symbols defined only in these files')
+parser.add_argument('--user', nargs='+',
+    help='look for symbols used only by these files')
+parser.add_argument('-u', '--unused', action='store_true',
+    help='show defined-but-unused symbols')
+parser.add_argument('-v', '--verbose', action='store_true')
 parser.add_argument('filenames', nargs='*')
 args = parser.parse_args()
 maxlen = 0
@@ -31,6 +35,8 @@ maxlen = 0
 allfiles = args.definer + args.user + args.filenames
 if args.definer: print "definers: ", args.definer
 if args.user: print "users: ", args.user
+if args.verbose:
+    print "files to check: ", allfiles
 
 for name in allfiles:
     nmargs = NM_ARGS[:]
@@ -46,12 +52,16 @@ for name in allfiles:
         groups = re.search('\((.*)\)', l)
         new = None
         if groups:
+            if args.verbose:
+                print 'replace hack: groups.group(0) {}'.format(groups.group(0))
             orig = groups.group(0)
             new = orig.replace(' ', '?')
             l.replace(orig, new)
         words = l.split()
         if new and new in words[0]:
             words[0].replace(new, orig)
+        if args.verbose:
+            print '    l: "{}"\nwords: {}'.format(l, words)
         filename, sym, symtype = words[:3]
         filename = filename.rstrip(':')
         filename_only = filename
