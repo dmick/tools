@@ -32,9 +32,9 @@ if args.definer: print "definers: ", args.definer
 if args.user: print "users: ", args.user
 
 for name in allfiles:
-    nmargs = NM_ARGS
+    nmargs = NM_ARGS[:]
     # use dynamic symbols for .so's
-    if name.endswith('.so'):
+    if '.so' in name:
         nmargs.append('-D')
     nm_output = subprocess.check_output(nmargs + [name])
     for l in nm_output.split('\n'):
