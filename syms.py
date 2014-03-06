@@ -57,18 +57,18 @@ for name in allfiles:
         if not l:
             continue
         # try to handle symbols-with-embedded-single-space: change
-        # any spaces between () to '?', split, change back.
+        # any spaces between () to '_', split, change back.
         groups = re.search('\((.*)\)', l)
         new = None
         if groups:
             if args.verbose:
                 print 'replace hack: groups.group(0) {}'.format(groups.group(0))
             orig = groups.group(0)
-            new = orig.replace(' ', '?')
-            l.replace(orig, new)
+            new = orig.replace(' ', '_')
+            l = l.replace(orig, new)
         words = l.split()
-        if new and new in words[0]:
-            words[0].replace(new, orig)
+        if new:
+            words = [w.replace(new, orig) for w in words]
         if args.verbose:
             print '    l: "{}"\nwords: {}'.format(l, words)
         filename, sym, symtype = words[:3]
