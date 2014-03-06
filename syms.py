@@ -1,9 +1,8 @@
 #!/usr/bin/env python
+# vim: ts=4 sw=4 expandtab
 '''
 syms.py: take a collection of object files and, for each public symbol,
-identify the definer and the users of that symbol (if there are any;
-if there are no uses, don't output the symbol unless -U/--unused is 
-given.)
+identify the definer and the users of that symbol (if there are any).
 '''
 
 import argparse
@@ -32,12 +31,18 @@ parser.add_argument('filenames', nargs='*')
 args = parser.parse_args()
 maxlen = 0
 
-allfiles = args.definer + args.user + args.filenames
-if args.definer: print "definers: ", args.definer
-if args.user: print "users: ", args.user
+allfiles = args.filenames
+if args.definer:
+    allfiles += args.definer
+if args.user:
+    allfiles += args.user
+
 if args.verbose:
+    if args.definer: print "definers: ", args.definer
+    if args.user: print "users: ", args.user
     print "files to check: ", allfiles
 
+if not args.used and not args.unused:
 for name in allfiles:
     nmargs = NM_ARGS[:]
     # use dynamic symbols for .so's
