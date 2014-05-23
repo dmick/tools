@@ -68,11 +68,12 @@ def finddeps(pkglist):
                 continue
 
             requirements.append((pkg, req))
+            requirements.append((pkg, req, level))
             finddeps([req])
     level -= 1
 
 finddeps(sys.argv[1:])
 
-for pkg, req in requirements:
-    print pkg, '->', req
+for pkg, req, level in requirements:
+    print '  ' * level, pkg, '->', req
 
