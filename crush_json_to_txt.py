@@ -10,6 +10,9 @@ to stdout.
 import json
 import sys
 
+# for sorting, to identify leaf buckets
+deviceids = []
+
 def print_tunables(m):
     for k,v in m['tunables'].iteritems():
         print 'tunable %s %d' % (k, v)
@@ -20,6 +23,8 @@ def print_devices(crushmap):
     print '# devices'
     for d in crushmap['devices']:
         print 'device %d %s' % (d['id'], d['name'])
+    global deviceids
+    deviceids.append(d['id'])
     print
 
 
@@ -47,9 +52,35 @@ def print_buckets(crushmap, itemname):
     def scale(w):
         return float(w) / 65536.0
 
+    def bucket_compare(a, b):
+        ''' compare for bucket topological sort '''
+
+        def alldevs(deps):
+            # nodes with only dev dependents sort later
+            global deviceids
+            return all([i in deviceids for i in deps])
+
+        adeps = [item['id'] for item in a['items']]
+        bdeps = [item['id'] for item in b['items']]
+        if a['id'] in bdeps:
+            # b depends on a: a < b
+            return -1
+        if b['id'] in adeps:
+            # a depends on b: a > b
+            return 1
+        if alldevs(adeps) and not alldevs(bdeps):
+            # a is a leaf, b is not, a < b
+            return -1
+        if alldevs(bdeps) and not alldevs(adeps):
+            # b is a leaf, a is not, a > b
+            return 1
+        # neither or both nodes are leaves, and neither depends on the other
+        # ...order by id
+        return cmp(a['id'], b['id'])
+
     print '# buckets'
     # sort in id numerical order so there are no forward id references
-    for b in sorted(crushmap['buckets'], key=lambda b: b['id']):
+    for b in sorted(crushmap['buckets'], cmp=bucket_compare):
         print '%s %s {' % (b['type_name'], b['name'])
         print '\tid %d\t\t# do not change unnecessarily' % b['id']
         print '\t# weight %.3f' % scale(b['weight'])
