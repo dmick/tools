@@ -111,7 +111,7 @@ def main():
         root.columnconfigure(i, weight=1)
 
     # don't take focus, so tab moves around filt widgets but not listboxes
-    filtout = Listbox(font=FONT, takefocus=0)
+    filtout = Listbox(font=FONT, takefocus=0, selectmode=EXTENDED)
     filtout.grid(row=1, columnspan=NUMFILT, sticky=W+E+N+S)
     outputlb = Listbox(font=FONT, takefocus=0, selectmode=EXTENDED)
     outputlb.grid(row=2, columnspan=NUMFILT, sticky=W+E+N+S)
@@ -124,7 +124,9 @@ def main():
         w.bind("<Return>", add_selected_to_output)
 
     # doubleclick in the filtout listbox adds to the output
-    filtout.bind("<Double-Button-1>", lambda x: add_to_output(filtout.get(filtout.curselection()[0])))
+    filtout.bind("<Button-3>", lambda x: add_to_output(
+        [filtout.get(i) for i in filtout.curselection()]
+    ))
 
     # Del with a selection in the output listbox removes the selection
     outputlb.bind("<Delete>", del_curselection)
