@@ -11,29 +11,12 @@ FONT=('Arial', '12')
 NUMFILT=3
 TITLE="FileFilter"
 
-root = Tk()
-root.title(TITLE)
-
 filts = list()
 filtstrings = list()
 
-for i in xrange(0, NUMFILT):
-    filtstrings.append(StringVar())
-    filtstrings[-1].trace("w", lambda x,y,z: relist())
-    w = Entry(font=FONT, textvariable=filtstrings[-1])
-    filts.append(w)
-    w.grid(row=0, column=i, sticky=W+E)
-    root.columnconfigure(i, weight=1)
-
-# don't take focus, so tab moves around filt widgets but not listboxes
-filtout = Listbox(font=FONT, takefocus=0, selectmode=EXTENDED)
-filtout.grid(row=1, columnspan=NUMFILT, sticky=W+E+N+S)
-outputlb = Listbox(font=FONT, takefocus=0)
-outputlb.grid(row=2, columnspan=NUMFILT, sticky=W+E+N+S)
-
-# let the second and third rows (with listboxes) eat up any resizing
-root.rowconfigure(1, weight=1)
-root.rowconfigure(2, weight=1)
+def exit_app(event):
+    print '\n'.join(output)
+    sys.exit()
 
 
 def relist():
@@ -72,27 +55,57 @@ def add_to_output(name, clear=False):
     relist()
 
 
-for i, w in enumerate(filts):
-    w.bind("<Return>", add_selected_to_output)
-
-filtout.bind("<Double-Button-1>", lambda x: add_to_output(filtout.get(filtout.curselection()[0])))
 
 
-for dirpath, dirs, files in os.walk('.'):
-    allfiles.extend([os.path.join(dirpath, f) for f in files])
+filtout = outputlb = None
 
-# show the initial list
-relist()
+def main():
+    global filtout, outputlb, allfiles
+    root = Tk()
+    root.title(TITLE)
 
-# set the initial focus
-filts[0].focus()
+    for i in xrange(0, NUMFILT):
+        filtstrings.append(StringVar())
+        filtstrings[-1].trace("w", lambda x,y,z: relist())
+        w = Entry(font=FONT, textvariable=filtstrings[-1])
+        filts.append(w)
+        w.grid(row=0, column=i, sticky=W+E)
+        root.columnconfigure(i, weight=1)
 
-def exit_app(event):
-    print '\n'.join(output)
-    sys.exit()
+    # don't take focus, so tab moves around filt widgets but not listboxes
+    filtout = Listbox(font=FONT, takefocus=0)
+    filtout.grid(row=1, columnspan=NUMFILT, sticky=W+E+N+S)
+    outputlb = Listbox(font=FONT, takefocus=0, selectmode=EXTENDED)
+    outputlb.grid(row=2, columnspan=NUMFILT, sticky=W+E+N+S)
 
-# loop until terminated, then print output list
-root.bind("<Control-c>", exit_app)
-root.mainloop()
-exit_app(None)
+    # let the second and third rows (with listboxes) eat up any resizing
+    root.rowconfigure(1, weight=1)
+    root.rowconfigure(2, weight=1)
+
+    for i, w in enumerate(filts):
+        w.bind("<Return>", add_selected_to_output)
+
+    # doubleclick in the filtout listbox adds to the output
+    filtout.bind("<Double-Button-1>", lambda x: add_to_output(filtout.get(filtout.curselection()[0])))
+
+    # Del with a selection in the output listbox removes the selection
+
+    for dirpath, dirs, files in os.walk('.'):
+        allfiles.extend([os.path.join(dirpath, f) for f in files])
+
+    # show the initial list
+    relist()
+
+    # set the initial focus
+    filts[0].focus()
+
+    # allow ^C anywhere in the app to exit
+    root.bind("<Control-c>", exit_app)
+
+    # loop until terminated, then print output list
+    root.mainloop()
+    exit_app(None)
+
+if __name__ == "__main__":
+    main()
 
