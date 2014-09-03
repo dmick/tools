@@ -23,7 +23,6 @@ def relist():
     global selected
 
     filtexprs = [w.get() or '' for w in filts]
-    print "relist: ", filtexprs
 
     # reduce allfiles to a list of entries containing all the filtexprs
     selected = [item for item in allfiles if \
