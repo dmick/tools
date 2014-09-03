@@ -55,6 +55,45 @@ def add_to_output(name, clear=False):
     relist()
 
 
+def contiguous_ranges(l):
+    '''
+    find contiguous ranges of integers in sorted list l
+    return list of tuples representing ranges
+
+    >>> contiguous_ranges([0,1,2])
+    [(0, 2)]
+    >>> contiguous_ranges([0,1,4,5])
+    [(0, 1), (4, 5)]
+    >>> contiguous_ranges([0,5])
+    [(0, 0), (5, 5)]
+    >>> contiguous_ranges([0,2,4])
+    [(0, 0), (2, 2), (4, 4)]
+    '''
+
+    length = len(l)
+    start = None
+    outlist = list()
+    end = length - 1
+    for i, elem in enumerate(l):
+        if start is None:
+            start = elem
+        if i+1 < length and l[i+1] != elem + 1:
+            outlist.append((start, elem))
+            start = None
+    # did we get the last element? If not, add it now
+    if not outlist or outlist[-1][-1] != l[-1]:
+        outlist.append((start, l[-1]))
+    return outlist
+
+
+def del_curselection(event):
+    # loop across contiguous ranges of curselection(), recalculating
+    # ranges each time, because as we delete, the selection indices change
+    while event.widget.curselection():
+        start, end = contiguous_ranges(event.widget.curselection())[0]
+        event.widget.delete(start, end)
+        if event.widget == outputlb:
+            del output[start:end]
 
 
 filtout = outputlb = None
@@ -89,6 +128,8 @@ def main():
     filtout.bind("<Double-Button-1>", lambda x: add_to_output(filtout.get(filtout.curselection()[0])))
 
     # Del with a selection in the output listbox removes the selection
+    outputlb.bind("<Delete>", del_curselection)
+    outputlb.bind("<KP_Delete>", del_curselection)
 
     for dirpath, dirs, files in os.walk('.'):
         allfiles.extend([os.path.join(dirpath, f) for f in files])
