@@ -32,7 +32,6 @@ def relist():
     # sort em and refill the listbox
     selected.sort()
     filtout.delete(0, END)
-    maxlen = -1
     for filename in selected:
         filtout.insert(END, filename)
     filtout.config(height=20, width=len(max(selected, key=len)))
@@ -73,7 +72,6 @@ def contiguous_ranges(l):
     length = len(l)
     start = None
     outlist = list()
-    end = length - 1
     for i, elem in enumerate(l):
         if start is None:
             start = elem
