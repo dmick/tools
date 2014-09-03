@@ -2,81 +2,97 @@
 
 from Tkinter import *
 import os
-import pprint
-pp=pprint.PrettyPrinter().pprint
 
 allfiles = list()
-selectlist = list()
+selected = list()
+output = list()
 
 FONT=('Arial', '12')
+NUMFILT=3
+TITLE="FileFilter"
 
 root = Tk()
+root.title(TITLE)
 
-t1=Entry(font=FONT)
-t2=Entry(font=FONT)
-t3=Entry(font=FONT)
-t1.grid(row=0, sticky=W+E)
-t2.grid(row=0, column=1, sticky=W+E)
-t3.grid(row=0, column=2, sticky=W+E)
-lb=Listbox(font=FONT)
-lb.grid(row=1, columnspan=3, sticky=W+E+N+S)
+filts = list()
+filtstrings = list()
 
-root.rowconfigure(0, weight=1)
-root.columnconfigure(0, weight=1)
-root.columnconfigure(1, weight=1)
-root.columnconfigure(2, weight=1)
+for i in xrange(0, NUMFILT):
+    filtstrings.append(StringVar())
+    filtstrings[-1].trace("w", lambda x,y,z: relist())
+    w = Entry(font=FONT, textvariable=filtstrings[-1])
+    filts.append(w)
+    w.grid(row=0, column=i, sticky=W+E)
+    root.columnconfigure(i, weight=1)
 
+# don't take focus, so tab moves around filt widgets but not listboxes
+filtout = Listbox(font=FONT, takefocus=0, selectmode=EXTENDED)
+filtout.grid(row=1, columnspan=NUMFILT, sticky=W+E+N+S)
+outputlb = Listbox(font=FONT, takefocus=0)
+outputlb.grid(row=2, columnspan=NUMFILT, sticky=W+E+N+S)
 
-def relist(filt1, filt2, filt3):
-    global selectlist
-    f1 = filt1 or ''
-    f2 = filt2 or ''
-    f3 = filt3 or ''
-    selectlist = [item for item in selectlist if f1 in item and f2 in item and f3 in item]
-    selectlist.sort()
-    lb.delete(0, END)	
-    for f in selectlist:
-        lb.insert(END, f)
-    lb.config(height=min(40, len(allfiles) / 2))
+# let the second and third rows (with listboxes) eat up any resizing
+root.rowconfigure(1, weight=1)
+root.rowconfigure(2, weight=1)
 
 
-def t1_callback(event):
-    relist(t1.get(), t2.get(), t3.get())
-    t2.focus()
+def relist():
+    global selected
+
+    filtexprs = [w.get() or '' for w in filts]
+    print "relist: ", filtexprs
+
+    # reduce allfiles to a list of entries containing all the filtexprs
+    selected = [item for item in allfiles if \
+                  all((filt in item) for filt in filtexprs)]
+
+    # sort em and refill the listbox
+    selected.sort()
+    filtout.delete(0, END)
+    maxlen = -1
+    for filename in selected:
+        filtout.insert(END, filename)
+    filtout.config(height=20, width=len(max(selected, key=len)))
 
 
-def t2_callback(event):
-    relist(t1.get(), t2.get(), t3.get())
-    t3.focus()
+def add_selected_to_output(event):
+    add_to_output(selected, clear=True)
 
 
-def t3_callback(event):
-    relist(t1.get(), t2.get(), t3.get())
-    t1.focus()
+def add_to_output(name, clear=False):
+    if not isinstance(name, list):
+        name = [name]
+    for n in name:
+        output.append(n)
+        outputlb.insert(END, n)
+    if clear:
+        for filt in filts:
+            filt.delete(0, END)
+        filts[0].focus()
+    relist()
 
-def out(event):
-    relist(t1.get(), t2.get(), t3.get())
-    print '\n'.join(selectlist)
-    sys.exit(0)
 
-t1.bind("<Tab>", t1_callback)
-t2.bind("<Tab>", t2_callback)
-t3.bind("<Tab>", t3_callback)
-t1.bind("<Return>", out)
-t2.bind("<Return>", out)
-t3.bind("<Return>", out)
+for i, w in enumerate(filts):
+    w.bind("<Return>", add_selected_to_output)
+
+filtout.bind("<Double-Button-1>", lambda x: add_to_output(filtout.get(filtout.curselection()[0])))
+
 
 for dirpath, dirs, files in os.walk('.'):
     allfiles.extend([os.path.join(dirpath, f) for f in files])
-allfiles.sort()
 
-for f in allfiles:
-    lb.insert(END, f)
-lb.config(height=min(40, len(allfiles) / 2))
-t1.focus()
-selectlist = allfiles
+# show the initial list
+relist()
 
+# set the initial focus
+filts[0].focus()
+
+def exit_app(event):
+    print '\n'.join(output)
+    sys.exit()
+
+# loop until terminated, then print output list
+root.bind("<Control-c>", exit_app)
 root.mainloop()
-root.resizeable(width=True, height=True)
-print selectlist
+exit_app(None)
 
