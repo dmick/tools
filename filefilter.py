@@ -63,6 +63,8 @@ def contiguous_ranges(l):
     [(0, 2)]
     >>> contiguous_ranges([0,1,4,5])
     [(0, 1), (4, 5)]
+    >>> contiguous_ranges([0,1,3,5,6])
+    [(0, 1), (3, 3), (5, 6)]
     >>> contiguous_ranges([0,5])
     [(0, 0), (5, 5)]
     >>> contiguous_ranges([0,2,4])
