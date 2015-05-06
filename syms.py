@@ -9,6 +9,7 @@ import argparse
 import collections
 import re
 import subprocess
+import sys
 
 DEFINES = 'ABCDGRSTVW'
 USES = 'U'
