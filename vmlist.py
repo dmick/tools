@@ -13,6 +13,8 @@ import textwrap
 CACHEFILE = "~/.vmlist.cache"
 CONFFILE = "~/.vmlist.conf"
 
+# mira004.front.sepia.ceph.com is dead
+
 VMMACHINES = textwrap.dedent('''\
     vercoi01.front.sepia.ceph.com
     vercoi02.front.sepia.ceph.com
@@ -27,7 +29,6 @@ VMMACHINES = textwrap.dedent('''\
     senta04.front.sepia.ceph.com
     mira001.front.sepia.ceph.com
     mira003.front.sepia.ceph.com
-    # mira004.front.sepia.ceph.com
     mira006.front.sepia.ceph.com
     mira007.front.sepia.ceph.com
     mira008.front.sepia.ceph.com
