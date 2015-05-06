@@ -1,13 +1,5 @@
 #!/usr/bin/env python
 
-'''
-On an RPM-based system, accept a list of packages, and recursively identify
-all packages they depend on.  Packages are only mentioned by the first requirer,
-and 'ignore_stop' is the list of packages to consider a stopping point.
-
-Uses rpm -q --requires/--whatprovides.
-'''
-
 import sys
 import os
 import subprocess
@@ -15,15 +7,12 @@ import subprocess
 checked = set()
 level = -1
 requirements = []
-
-# if you find this, don't report it, and return from the recursion
 ignore_stop = ['glibc', 'coreutils']
 
 def finddeps(pkglist):
     global checked, level, requirements
     level += 1
     for pkg in pkglist:
-        # do we already know this one?  If so, bail
         if pkg in checked:
             level -= 1
             return
@@ -67,7 +56,6 @@ def finddeps(pkglist):
             if ignoreit:
                 continue
 
-            requirements.append((pkg, req))
             requirements.append((pkg, req, level))
             finddeps([req])
     level -= 1
