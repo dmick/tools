@@ -62,18 +62,24 @@ VMMACHINES = textwrap.dedent('''\
 
 NOVACLIENT_VERSION = '2'
 
-cfgparser = ConfigParser.SafeConfigParser(
-    {
-        'vmmachines': VMMACHINES,
-        'cachefile': CACHEFILE,
-        'novaclient_version': NOVACLIENT_VERSION,
-    }
-)
-cfgparser.read(os.path.expanduser(CONFFILE))
+
+class Cfg(object):
+
+    def __init__(self, file):
+        self.cfgparser = ConfigParser.SafeConfigParser(
+            {
+                'vmmachines': VMMACHINES,
+                'cachefile': CACHEFILE,
+                'novaclient_version': NOVACLIENT_VERSION,
+            }
+        )
+        self.cfgparser.read(file)
+
+    def get(self, key):
+        return self.cfgparser.get('default', key)
 
 
-def cfg(key):
-    return cfgparser.get('default', key)
+cfg = Cfg(os.path.expanduser(CONFFILE))
 
 
 def list_vms(host, outputfile):
@@ -112,18 +118,21 @@ def list_vms(host, outputfile):
 
 
 def list_nova(outputfile):
-    cloud_user = cfg('cloud_user')
-    cloud_password = cfg('cloud_password')
-    cloud_project = cfg('cloud_project')
-    cloud_auth_url = cfg('cloud_auth_url')
+    cloud_user = cfg.get('cloud_user')
+    cloud_password = cfg.get('cloud_password')
+    cloud_project = cfg.get('cloud_project')
+    cloud_auth_url = cfg.get('cloud_auth_url')
     if (cloud_user and cloud_password and cloud_project and cloud_auth_url):
         nova = novaclient.client.Client(
-            int(cfg('novaclient_version')),
+            int(cfg.get('novaclient_version')),
             cloud_user, cloud_password, cloud_project, cloud_auth_url,
         )
-        nova_output = ['{} (nova)\n'.format(getattr(s, s.NAME_ATTR).strip())
-                       for s in nova.servers.list()]
-        outputfile.writelines(nova_output)
+        output = [
+            'nova {} ({})\n'.format(
+                getattr(s, s.NAME_ATTR).strip(), cloud_auth_url
+            ) for s in nova.servers.list()
+        ]
+        outputfile.writelines(output)
         outputfile.flush()
         outputfile.seek(0)
 
@@ -136,19 +145,19 @@ List all KVM, LXC, and OpenStack vms known
 Options:
     -r, --refresh           refresh cached list (cache in {cachefile})
     -m, --machine MACHINE   get list from only this host, and do not cache
-""".format(cachefile=cfg('cachefile'))
+""".format(cachefile=cfg.get('cachefile'))
 
 
 def main():
 
     args = docopt.docopt(usage)
-    cachefile = os.path.expanduser(cfg('cachefile'))
+    cachefile = os.path.expanduser(cfg.get('cachefile'))
 
     if args['--refresh'] or args['--machine']:
 
         procs = []
         outfiles = []
-        hosts = args['--machine'] or cfg('vmmachines').split('\n')
+        hosts = args['--machine'] or cfg.get('vmmachines').split('\n')
         for host in hosts:
             outfile = tempfile.NamedTemporaryFile()
             proc = multiprocessing.Process(
