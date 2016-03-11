@@ -15,7 +15,7 @@ deviceids = []
 
 def print_tunables(m):
     for k,v in m['tunables'].iteritems():
-        print 'tunable %s %d' % (k, v)
+        print 'tunable %s %s' % (k, str(v))
     print
 
 
