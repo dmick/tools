@@ -3,12 +3,16 @@
 import docopt
 import os
 import json
+import logging
 import paramiko
 import socket
 import subprocess
 import sys
 import yaml
 
+
+logging.basicConfig(level=logging.WARNING)
+log = logging.getLogger(__name__)
 
 def do_daemon_command(host, osdlist, cmd):
     '''
@@ -33,10 +37,10 @@ def do_daemon_command(host, osdlist, cmd):
     try:
         client.connect(host, username=user, timeout=15)
     except paramiko.SSHException:
-        print >> sys.stderr, "Can't connect to ", host
+        log.error("Can't connect to %s", host)
         return
     except socket.error, v:
-        print >> sys.stderr, "Can't connect to ", host, ": ", v
+        log.error("Can't connect to %s: %s", host, v)
         return
 
     for o in sorted(osdlist):
@@ -46,12 +50,12 @@ def do_daemon_command(host, osdlist, cmd):
 
             _, out, err = client.exec_command(command)
         except paramiko.SSHException:
-            print >> sys.stderr, "SSH error contacting ", host
+            log.exception("Paramiko SSH error contacting %s", host)
             return
         rc = out.channel.recv_exit_status()
         if rc != 0:
-            print >> sys.stderr, "Error: ", rc
-            print >> sys.stderr, err.read()
+            log.error("return code: %s", rc)
+            log.error("stderr: %s", err.read())
             return
 
         out = out.read()
@@ -77,8 +81,8 @@ def get_osd_tree(conf):
     # make a dict of osds[host] = [osd.n, osd.m, ..]
     out, err = p.communicate()
     if p.returncode != 0:
-        print 'error %d' % p.returncode
-        print 'stderr: ', err
+        log.error('return code %d', p.returncode)
+        log.error('stderr: %s', err)
         return {}
     return json.loads(out)
 
