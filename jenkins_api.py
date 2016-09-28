@@ -21,7 +21,6 @@ There is a test main program for experimentation.
 '''
 import logging
 import os
-import packages
 import re
 import requests
 import shutil
@@ -48,7 +47,7 @@ DEFAULT_ARCHES = ['x86_64', 'noarch']
 
 
 def jenkins_url(host):
-    return 'http://{0}:8080'.format(host)
+    return 'http://{0}'.format(host)
 
 
 def _filter_archs(artifacts, archs=None):
@@ -308,7 +307,6 @@ def _get_job_artifacts(host, jobname, distrover=None, arch=None, branch=None,
         if onlypkgs:
             artifacts = [a for a in artifacts if a.url.endswith('rpm') or a.url.endswith('deb')]
         artifacts = _filter_archs(artifacts, ('x86_64', 'noarch'))
-        artifacts = [a for a in artifacts if not packages.should_skip(a.filename)]
         if match_jobname:
             artifacts = [a for a in artifacts if a.filename.startswith(jobname)]
         all_artifacts.extend(artifacts)
@@ -378,7 +376,7 @@ Get packages from Jenkins server
 
 Options:
   --host, -h JENKINS         Jenkins host
-                             [default: jenkins.front.sepia.ceph.com]
+                             [default: jenkins.ceph.com]
   --jobname, -j JOBNAME      Jenkins job name
   --arch, -a ARCH            Architecture [default: x86_64]
   --distrover, -d DISTROVER  Distro and version
