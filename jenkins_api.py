@@ -19,6 +19,7 @@ If no suitable artifacts are found, raise an exception.
 
 There is a test main program for experimentation.
 '''
+import getpass
 import logging
 import os
 import re
@@ -35,6 +36,9 @@ logging.getLogger('requests.packages.urllib3.connectionpool').\
     setLevel(logging.WARNING)
 logging.getLogger('urllib3.connectionpool').\
     setLevel(logging.WARNING)
+
+JENKINS_USER = os.environ.get('JENKINS_API_USER') or getpass.getuser()
+JENKINS_PASS = os.environ.get('JENKINS_API_TOKEN')
 
 # these will appear in the environment of matrix jobs; they are
 # labels of the axes of multiple-configuration setups.  It would
@@ -240,7 +244,11 @@ def _matching_builds(url, jobname, arch, distrover, branch=None):
     Iterator: return builds of jobname, in newest-first order, that
     match arch/distrover/optional branch (if there are any).
     '''
-    job = Jenkins(url)[jobname]
+    job = Jenkins(
+        url,
+        username=JENKINS_USER,
+        password=JENKINS_PASS,
+    )[jobname]
     # get_build_ids() returns in newest-to-oldest order
     for buildno in job.get_build_ids():
         build = job.get_build(buildno)
