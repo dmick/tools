@@ -68,10 +68,9 @@ def print_bins(crashbinlist):
     """
     for crashrec in crashbinlist:
         report_id, num_crashes, crashbins = crashrec
-        print(f'{report_id} has {num_crashes} total crashes')
-        nltab = '\n\t'
+        print('%s has %s total crashes' % (report_id, num_crashes))
         for count, bt in crashbins.values():
-            print(f'{count} of:\n\t{nltab.join(bt)}\n')
+            print('%s of:\n\t%s\n' % (count, '\n\t'.join(bt)))
 
 def main():
     conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER, password=PASSWORD)
