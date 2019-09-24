@@ -41,10 +41,16 @@ def collect_crashes_and_bin(conn, n):
     cur.execute('select json(report)->>\'report_id\', json(report)->>\'crashes\' from report limit %d;' % n)
     ret = list()
     for report_id, crashes in cur.fetchall():
-        crashlist = json.loads(crashes)
-        crashbins = dict()
+        if crashes is None or len(crashes) == 0:
+            continue
+        try:
+            crashlist = json.loads(crashes)
+        except TypeError:
+            print('%s has badly-formatted crashes list %s' % (report_id, crashes), file=sys.stderr)
+            continue
         if len(crashlist) == 0:
             continue
+        crashbins = dict()
         for crash in crashlist:
             sig = hashlib.md5()
             funclist = sanitize_backtrace(crash['backtrace'])
