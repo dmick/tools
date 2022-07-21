@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# note: this is obsolete code
+
 import hashlib
 import json
 import os
