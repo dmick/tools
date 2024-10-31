@@ -1,0 +1,42 @@
+#!/usr/bin/python3
+import sys
+import yaml
+import pprint
+
+'''
+# it seems as though this method only allows mapping types.  If it can
+# do sequence types I haven't figured out how.
+class IncludeRaw(yaml.YAMLObject):
+    yaml_tag = '!include-raw:'
+
+    def __init__(self, data):
+        self.list = data
+
+    def __repr__(self):
+        return str(self.list)
+'''
+
+class IncludeRaw(object):
+    def __init__(self, l):
+        self.l = l
+    def __repr__(self):
+        return f'!include-raw: {self.l}'
+
+def include_raw_representer(dumper, data):
+    return dumper.represent_sequence('!include-raw:', data)
+
+def include_raw_constructor(loader, node):
+    value = loader.construct_sequence(node)
+    return IncludeRaw(value)
+
+
+def main():
+    yaml.add_representer(IncludeRaw, include_raw_representer)
+    yaml.add_constructor('!include-raw:', include_raw_constructor)
+    try:
+        pprint.pprint(yaml.load(open(sys.argv[1])))
+    except IndexError:
+        pprint.pprint(yaml.load(sys.stdin))
+
+if __name__ == '__main__':
+    sys.exit(main())
