@@ -21,22 +21,29 @@ class IncludeRaw(yaml.YAMLObject):
 
 # stuff for yaml encoding, to handle !include-raw-*
 
-class IncludeRaw(object):
+class Include(object):
     def __init__(self, t, l):
-        self.t = t
+        # PyYAML wants the ':' in the tag; no one else does
+        self.t = t.replace(':', '')
         self.l = l
 
     def __repr__(self):
-        return f'{self.t.replace('!','')} {self.l}'
+        return f'{self.t}: {self.l}'
 
-# apparently this is never called.  ?
-#def include_raw_representer(dumper, data):
-#    return dumper.represent_sequence('AAAAAAAAAAAA !include-raw-escape:', data)
+# apparently this is never called.  ?  not sure how I'd get the tag
+# anyway
+#def include_representer(dumper, data):
+#    return dumper.represent_sequence('<tag here>', data)
 
-def include_raw_constructor(loader, node):
-    breakpoint()
-    value = loader.construct_sequence(node)
-    return IncludeRaw(node.tag, value)
+def include_constructor(loader, node):
+
+    # it feels dirty using ScalarNode and SequenceNode but...
+
+    if isinstance(node, yaml.ScalarNode):
+        value = loader.construct_scalar(node)
+    elif isinstance(node, yaml.SequenceNode):
+        value=loader.construct_sequence(node)
+    return Include(node.tag, value)
 
 
 def parse_args():
@@ -45,28 +52,39 @@ def parse_args():
     ap.add_argument('infile', nargs='*',  help="input filename (stdin if not supplied")
     return ap.parse_args()
 
-# for json encoding of the IncludeRaw type
+# for json encoding of the Include type.  Just convert it to
+# a dict with tag and value (value can be a string or a list of strings)
+# the base JSONEncoder can handle a dict
 
-class IncludeRawEncoder(json.JSONEncoder):
-
+class IncludeEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, IncludeRaw):
-            return str(obj)
+        if isinstance(obj, Include):
+            return {obj.t : obj.l}
         return super().default(obj)
+
+custom_types = [
+    'include',
+    'include-raw',
+    'include-raw-escape',
+    'include-raw-expand',
+    'include-raw-verbatim',
+    'include-jinja2'
+]
 
 def main():
     args = parse_args()
-    yaml.add_constructor('!include-raw:', include_raw_constructor, Loader=yaml.SafeLoader)
-    yaml.add_constructor('!include-raw-escape:', include_raw_constructor, Loader=yaml.SafeLoader)
-    yaml.add_constructor('!include-raw-verbatim:', include_raw_constructor, Loader=yaml.SafeLoader)
-    # yaml.add_representer(IncludeRaw, include_raw_representer)
+    for t in custom_types:
+        # note the tag must include the ':' here.  It's removed when
+        # __init__()ing an Include type
+        yaml.add_constructor(f'!{t}:', include_constructor, Loader=yaml.SafeLoader)
+    # yaml.add_representer(Include, include_representer)
     if args.infile:
         data = yaml.safe_load(open(args.infile[0], 'rb'))
     else:
         data = yaml.safe_load(sys.stdin)
 
     if args.json:
-        print(json.dumps(data, indent=2, cls=IncludeRawEncoder))
+        print(json.dumps(data, indent=2, cls=IncludeEncoder))
     else:
         pprint.pprint(data)
 
